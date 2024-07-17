@@ -6,6 +6,8 @@ export default function MainPage() {
   const [searchInput, setSearchInput] = useState('');
   const [products, setProducts] = useState([]);
   const [productsToDisplay, setProductsToDisplay] = useState([]);
+  const [toggleLowToHighSort, setToggleLowToHighSort] = useState(false);
+  const [toggleHighToLowSort, setToggleHighToLowSort] = useState(false);
   const [sortOptionsVisible, setSortOptionsVisibility] = useState(false);
   const [filterOptionsVisible, setFilterOptionsVisibility] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -17,8 +19,10 @@ export default function MainPage() {
 
   const productsRef = useRef([]);
   const searchTimeoutRef = useRef(null);
+  const lowToHighBtnRef = useRef(null);
+  const highToLowBtnRef = useRef(null);
 
-  //format the category strings to have capital letters and spaces insead of dashes (-)
+  //format the category strings to have capital letters and spaces insead of dashes (-) (and 'mens' and 'womens' to 'Men's' and 'Women's')
   function formatString(string) {
     return string.split('-').map(word => word === 'womens' ? word = "Women's" : word === 'mens' ? word = "Men's" : word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   }
@@ -127,19 +131,37 @@ export default function MainPage() {
     setProductsToDisplay(filteredProducts);
   }, [selectedCategories, selectedBrands, products]);
   
-  //Sort products in acsending or descending order based on user input
-  function sortProducts(order) {
-    const sortedProducts = [...productsToDisplay].sort((a, b) => {
-      if (order === 'asc') {
-        return a.price - b.price;
-      } else {
-        return b.price - a.price; 
-      }
-    });
-
-    setProductsToDisplay(sortedProducts);
-    setSortOptionsVisibility(false);
+  // Function to toggle High to Low sorting
+  function toggleLowToHigh() {
+    if (toggleLowToHighSort) {
+      lowToHighBtnRef.current.style.filter = "brightness(1.0)"
+      setProductsToDisplay(productsRef.current);
+    } else {
+      const sortedProducts = [...productsToDisplay].sort((a, b) => a.price - b.price);
+      lowToHighBtnRef.current.style.filter = "brightness(1.2)"
+      highToLowBtnRef.current.style.filter = "brightness(1.0)"
+      setProductsToDisplay(sortedProducts);
+    }
+    setToggleLowToHighSort(!toggleLowToHighSort);
+    setToggleHighToLowSort(false);
   }
+
+  // Function to toggle High to Low sorting
+  function toggleHighToLow() {
+    if (toggleHighToLowSort) {
+      highToLowBtnRef.current.style.filter = "brightness(1.0)"
+      setProductsToDisplay(productsRef.current);
+    } else {
+      const sortedProducts = [...productsToDisplay].sort((a, b) => b.price - a.price);
+      highToLowBtnRef.current.style.filter = "brightness(1.2)"
+      lowToHighBtnRef.current.style.filter = "brightness(1.0)"
+      setProductsToDisplay(sortedProducts);
+    }
+    setToggleHighToLowSort(!toggleHighToLowSort);
+    setToggleLowToHighSort(false);
+  }
+
+  
 
   return (
     <div className="main-container">
@@ -150,8 +172,8 @@ export default function MainPage() {
           <button className="filter-button" onClick={toggleFilterOptions}>Filter</button>
           {sortOptionsVisible && (
             <div className="sort-options">
-              <button onClick={() => sortProducts('asc')}>Price: Low to High</button>
-              <button onClick={() => sortProducts('desc')}>Price: High to Low</button>
+              <button id='low-to-high-button' ref={lowToHighBtnRef} onClick={toggleLowToHigh}>Price: Low to High</button>
+              <button id='high-to-low-button' ref={highToLowBtnRef} onClick={toggleHighToLow}>Price: High to Low</button>
               <button onClick={toggleSortOptions}>Close</button>
             </div>
           )}
