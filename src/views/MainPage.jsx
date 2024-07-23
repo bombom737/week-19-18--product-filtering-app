@@ -1,167 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import Products from '../components/Products';
+import { useProductContext } from '../context/productContext';
 import './MainPage.css';
 
 export default function MainPage() {
-  const [searchInput, setSearchInput] = useState('');
-  const [products, setProducts] = useState([]);
-  const [productsToDisplay, setProductsToDisplay] = useState([]);
-  const [toggleLowToHighSort, setToggleLowToHighSort] = useState(false);
-  const [toggleHighToLowSort, setToggleHighToLowSort] = useState(false);
-  const [sortOptionsVisible, setSortOptionsVisibility] = useState(false);
-  const [filterOptionsVisible, setFilterOptionsVisibility] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [categoriesVisible, setCategoriesVisible] = useState(false);
-  const [brands, setBrands] = useState([]);
-  const [brandsVisible, setBrandsVisible] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedBrands, setSelectedBrands] = useState([]);
-
-  const productsRef = useRef([]);
-  const searchTimeoutRef = useRef(null);
-  const lowToHighBtnRef = useRef(null);
-  const highToLowBtnRef = useRef(null);
-
-  //format the category strings to have capital letters and spaces insead of dashes (-) (and 'mens' and 'womens' to 'Men's' and 'Women's')
-  function formatString(string) {
-    return string.split('-').map(word => word === 'womens' ? word = "Women's" : word === 'mens' ? word = "Men's" : word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-  }
-  
-  //Fetch the products, populate arrays of categories and brands for later use in the filter function
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await fetch('https://dummyjson.com/products?limit=0');
-        const jsonData = await response.json();
-        setProducts(jsonData.products);
-        productsRef.current = jsonData.products;
-        setProductsToDisplay(jsonData.products);
-        const categorySet = new Set();
-        const brandSet = new Set();
-
-        jsonData.products.forEach(product => {
-          categorySet.add(formatString(product.category));
-          brandSet.add(product.brand);
-        });
-
-        setCategories(Array.from(categorySet));
-        setBrands(Array.from(brandSet));
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    fetchData();
-  }, []);
-
-    //Search product function with debounce
-    function search(event) {
-      const input = event.target.value;
-      setSearchInput(input);
-  
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-  
-      searchTimeoutRef.current = setTimeout(() => {
-        if (input === '') {
-          setProductsToDisplay(productsRef.current);
-        } else {
-          const matchingProducts = productsRef.current.filter(product =>
-            product.title.toLowerCase().includes(input.toLowerCase())
-          );
-          setProductsToDisplay(matchingProducts);
-        }
-      }, 250);
-    }
-
-  //Toggle visibility of the sorting options div
-  function toggleSortOptions() {
-    setSortOptionsVisibility(!sortOptionsVisible);
-    if (filterOptionsVisible) {
-        setFilterOptionsVisibility(false);
-    }
-  }
-
-  //Toggle visibility of the filtering options div
-  function toggleFilterOptions() {
-    setFilterOptionsVisibility(!filterOptionsVisible);
-    if (sortOptionsVisible) {
-        setSortOptionsVisibility(false);
-    }
-  }
-
-  //Same logic for these two, responsible for categories and brands
-  function toggleCategoriesOption(){
-    setCategoriesVisible(!categoriesVisible);
-    if (brandsVisible) {
-      setBrandsVisible(false);
-    }
-  }
-
-  function toggleBrandsOption(){
-    setBrandsVisible(!brandsVisible);
-    if (categoriesVisible) {
-      setCategoriesVisible(false);
-    }
-  }
-
-  //Track which categories to filter by
-  const filterCategory = (event) => {
-    const { value, checked } = event.target;
-    setSelectedCategories(prev =>
-      checked ? [...prev, value] : prev.filter(category => category !== value)
-    );
-  }
-
-  //Track which brands to filter by
-  const filterBrand = (event) => {
-    const { value, checked } = event.target;
-    setSelectedBrands(prev =>
-      checked ? [...prev, value] : prev.filter(brand => brand !== value)
-    );
-  }
-  
-  //useEffect to display products based on the filters set by user
-  useEffect(() => {
-    const filteredProducts = products.filter(product => {
-      const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(formatString(product.category));
-      const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
-      return categoryMatch && brandMatch;
-    });
-    setProductsToDisplay(filteredProducts);
-  }, [selectedCategories, selectedBrands, products]);
-  
-  // Function to toggle High to Low sorting
-  function toggleLowToHigh() {
-    if (toggleLowToHighSort) {
-      lowToHighBtnRef.current.style.filter = "brightness(1.0)"
-      setProductsToDisplay(productsRef.current);
-    } else {
-      const sortedProducts = [...productsToDisplay].sort((a, b) => a.price - b.price);
-      lowToHighBtnRef.current.style.filter = "brightness(1.2)"
-      highToLowBtnRef.current.style.filter = "brightness(1.0)"
-      setProductsToDisplay(sortedProducts);
-    }
-    setToggleLowToHighSort(!toggleLowToHighSort);
-    setToggleHighToLowSort(false);
-  }
-
-  // Function to toggle High to Low sorting
-  function toggleHighToLow() {
-    if (toggleHighToLowSort) {
-      highToLowBtnRef.current.style.filter = "brightness(1.0)"
-      setProductsToDisplay(productsRef.current);
-    } else {
-      const sortedProducts = [...productsToDisplay].sort((a, b) => b.price - a.price);
-      highToLowBtnRef.current.style.filter = "brightness(1.2)"
-      lowToHighBtnRef.current.style.filter = "brightness(1.0)"
-      setProductsToDisplay(sortedProducts);
-    }
-    setToggleHighToLowSort(!toggleHighToLowSort);
-    setToggleLowToHighSort(false);
-  }
-
-  
+  const {
+    searchInput, productsToDisplay, sortOptionsVisible, toggleSortOptions,
+    filterOptionsVisible, toggleFilterOptions, categoriesVisible, toggleCategoriesOption,
+    brandsVisible, toggleBrandsOption, categories, brands, filterCategory, filterBrand,
+    search, lowToHighBtnRef, highToLowBtnRef, toggleLowToHigh, toggleHighToLow
+  } = useProductContext();
 
   return (
     <div className="main-container">
@@ -174,7 +22,6 @@ export default function MainPage() {
             <div className="sort-options">
               <button id='low-to-high-button' ref={lowToHighBtnRef} onClick={toggleLowToHigh}>Price: Low to High</button>
               <button id='high-to-low-button' ref={highToLowBtnRef} onClick={toggleHighToLow}>Price: High to Low</button>
-              <button onClick={toggleSortOptions}>Close</button>
             </div>
           )}
           {filterOptionsVisible && (
@@ -201,7 +48,6 @@ export default function MainPage() {
                   ))}
                 </div>
               )}
-              <button onClick={toggleFilterOptions}>Close</button>
             </div>
           )}
         </div>
